@@ -14,7 +14,7 @@ class Input:
         # normalization can help with training stability and convergence, but it is optional
         self.norm = norm
 
-    def forward(self, input: np.ndarray):
+    def forward(self, input: np.ndarray) -> np.ndarray:
         """
         input: numpy array of shape (batch_size, channels, height, width) according to the input shape defined in the constructor
         returns: processed input data, potentially compressed and normalized (B,C,H,W)
@@ -35,11 +35,11 @@ class Input:
         
         return input
     
-    def _compress(self, input: np.ndarray):
+    def _compress(self, input: np.ndarray) -> np.ndarray:
         input = input.astype(np.float32)
         return input
     
-    def _normalize(self, input: np.ndarray):
+    def _normalize(self, input: np.ndarray) -> np.ndarray:
         input = input / 255.0
         return input
 
