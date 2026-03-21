@@ -1,1 +1,3 @@
 base_env/*
+*.pyc
+__pycache__/

@@ -44,40 +44,12 @@ class Convolution(Layer):
         returns: the gradient of the loss with respect to the input of the convolution layer, shape (batch_size, in_channels, height, width)
         computes the gradients with respect to the filters, biases, and input using the chain rule of calculus and stores them for parameter updates
         """
-        batch_size, _, in_height, in_width = self.input_padded_cache.shape
         grad_input_padded = np.zeros_like(self.input_padded_cache)
 
         self.grad_filters = np.zeros_like(self.filters)
         self.grad_biases = np.zeros_like(self.biases)
 
-        batch_size, _, out_h, out_w = grad_output.shape
-
-        for b in range(batch_size):
-            for i in range(out_h):
-                for j in range(out_w):
-
-                    h_start = i * self.stride
-                    h_end = h_start + self.filter_size
-                    w_start = j * self.stride
-                    w_end = w_start + self.filter_size
-
-                    # compute slice of input corresponding to the current window and batch element
-                    input_slice = self.input_padded_cache[b, :, h_start:h_end, w_start:w_end]
-
-                    # loop over each filter to compute gradients
-                    for f in range(self.num_filters):
-
-                        # get the gradient at the current position for the current filter
-                        grad_output_value = grad_output[b, f, i, j]
-
-                        # accumulate gradients for filters and biases
-                        self.grad_filters[f] += input_slice * grad_output_value
-                        self.grad_biases[f] += grad_output_value
-
-                        # accumulate gradient for input
-                        grad_input_padded[b, :, h_start:h_end, w_start:w_end] += self.filters[f] * grad_output_value
-
-        grad_input = self._remove_padding(grad_input_padded)
+        grad_input = self._compute_gradients(grad_output, grad_input_padded)
 
         return grad_input
 
@@ -144,3 +116,42 @@ class Convolution(Layer):
                         output[b, f, i, j] = np.sum(input_slice * self.filters[f]) + self.biases[f]
 
         return output
+    
+    def _compute_gradients(self, grad_output: np.ndarray, grad_input_padded: np.ndarray) -> np.ndarray:
+        """
+        grad_output: numpy array of shape (batch_size, num_filters, out_height, out_width) - the gradient of the loss with respect to the output of the convolution layer
+        grad_input_padded: numpy array of shape (batch_size, in_channels, height + 2*padding, width + 2*padding) - the gradient of the loss with respect to the padded input
+        returns: the gradient of the loss with respect to the input of the convolution layer, shape (batch_size, in_channels, height, width)
+        computes the gradients with respect to the filters, biases, and input using the chain rule of calculus and stores them for parameter updates
+        """
+
+        batch_size, _, out_h, out_w = grad_output.shape
+
+        for b in range(batch_size):
+            for i in range(out_h):
+                for j in range(out_w):
+
+                    h_start = i * self.stride
+                    h_end = h_start + self.filter_size
+                    w_start = j * self.stride
+                    w_end = w_start + self.filter_size
+
+                    # compute slice of input corresponding to the current window and batch element
+                    input_slice = self.input_padded_cache[b, :, h_start:h_end, w_start:w_end]
+
+                    # loop over each filter to compute gradients
+                    for f in range(self.num_filters):
+
+                        # get the gradient at the current position for the current filter
+                        grad_output_value = grad_output[b, f, i, j]
+
+                        # accumulate gradients for filters and biases
+                        self.grad_filters[f] += input_slice * grad_output_value
+                        self.grad_biases[f] += grad_output_value
+
+                        # accumulate gradient for input
+                        grad_input_padded[b, :, h_start:h_end, w_start:w_end] += self.filters[f] * grad_output_value
+
+        grad_input = self._remove_padding(grad_input_padded)
+
+        return grad_input
