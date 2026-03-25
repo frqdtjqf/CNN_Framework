@@ -40,15 +40,3 @@ class FullyConnected(Layer):
     def update_params(self, learning_rate: float):
         self.weights -= learning_rate * self.grad_weights
         self.biases -= learning_rate * self.grad_biases
-
-fc = FullyConnected(num_input_neurons=4, num_neurons=3)
-
-x = np.random.randn(2,4)  # batch_size=2
-out = fc.forward(x)
-
-grad = np.ones_like(out)
-dx = fc.backward(grad)
-
-print("Input:\n", x)
-print("Output:\n", out)
-print("Grad Input:\n", dx)
